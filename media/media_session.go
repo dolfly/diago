@@ -44,6 +44,11 @@ var (
 	// RTPNAT options
 	RTPNATDisabled = 0
 	RTPNATSymetric = 1
+
+	// SDP codec exchanges
+	// 0 (Default) - answerer prefers offerer order recomended by rfc
+	// 1 - answerer prefers local order
+	SDPCodecPreferLocalOrder int = 0
 )
 
 func logRTPRead(m *MediaSession, raddr net.Addr, p *rtp.Packet) {
@@ -438,6 +443,7 @@ func (s *MediaSession) RemoteSDP(sdpReceived []byte) error {
 	//    different entity.  In that case, the version number in the "o=" line
 	//    of the answer is unrelated to the version number in the o line of the
 	//    offer.
+	amswerer := s.sessionID == 0
 	if s.sessionID != si.SessionID {
 		s.sessionID = si.SessionID
 		s.sessionVersion = si.SessionVersion + 1
@@ -490,7 +496,7 @@ func (s *MediaSession) RemoteSDP(sdpReceived []byte) error {
 	// 	  no reason to change it, the ordering of codecs in the answer be 8,
 	//    48, and not 48, 8.  This helps assure that the same codec is used in
 	//    both directions.
-	if s.updateRemoteCodecs(codecs[:n]) == 0 {
+	if s.updateRemoteCodecs(codecs[:n], amswerer) == 0 {
 		return fmt.Errorf("no supported codecs found")
 	}
 
@@ -700,13 +706,29 @@ func (s *MediaSession) Finalize() error {
 	return nil
 }
 
-func (s *MediaSession) updateRemoteCodecs(codecs []Codec) int {
+func (s *MediaSession) updateRemoteCodecs(codecs []Codec, answerer bool) int {
 	if len(s.Codecs) == 0 {
 		s.Codecs = codecs
 		return len(codecs)
 	}
 
 	DefaultLogger().Debug("Remote Codecs Update", "local", s.Codecs, "remote", codecs)
+
+	// Some systems may like to answer with local order of preference
+	if SDPCodecPreferLocalOrder > 0 && answerer {
+		filter := make([]Codec, 0, len(codecs))
+		for _, rc := range s.Codecs {
+			for _, c := range codecs {
+				if c == rc {
+					filter = append(filter, c)
+					break
+				}
+			}
+		}
+		s.filterCodecs = filter
+		return len(s.filterCodecs)
+	}
+
 	filter := codecs[:0] // reuse buffer
 	for _, rc := range codecs {
 		for _, c := range s.Codecs {
