@@ -311,13 +311,6 @@ func (s *MediaSession) LocalSDP() []byte {
 		connIP = ip
 	}
 
-	// https://datatracker.ietf.org/doc/html/rfc3264#section-6.1
-	// 	Although the answerer MAY list the formats in their desired order of
-	//    preference, it is RECOMMENDED that unless there is a specific reason,
-	//    the answerer list formats in the same relative order they were
-	//    present in the offer.  In other words, if a stream in the offer lists
-	//    audio codecs 8, 22 and 48, in that order, and the answerer only
-	//    supports codecs 8 and 48, it is RECOMMENDED that, if the answerer has
 	codecs := s.Codecs
 	if len(s.filterCodecs) > 0 {
 		codecs = s.filterCodecs
@@ -487,6 +480,16 @@ func (s *MediaSession) RemoteSDP(sdpReceived []byte) error {
 		return fmt.Errorf("no codecs found in SDP")
 	}
 
+	// https://datatracker.ietf.org/doc/html/rfc3264#section-6.1
+	// 	Although the answerer MAY list the formats in their desired order of
+	//    preference, it is RECOMMENDED that unless there is a specific reason,
+	//    the answerer list formats in the same relative order they were
+	//    present in the offer.  In other words, if a stream in the offer lists
+	//    audio codecs 8, 22 and 48, in that order, and the answerer only
+	//    supports codecs 8 and 48, it is RECOMMENDED that, if the answerer has
+	// 	  no reason to change it, the ordering of codecs in the answer be 8,
+	//    48, and not 48, 8.  This helps assure that the same codec is used in
+	//    both directions.
 	if s.updateRemoteCodecs(codecs[:n]) == 0 {
 		return fmt.Errorf("no supported codecs found")
 	}
