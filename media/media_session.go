@@ -704,9 +704,9 @@ func (s *MediaSession) updateRemoteCodecs(codecs []Codec) int {
 	}
 
 	DefaultLogger().Debug("Remote Codecs Update", "local", s.Codecs, "remote", codecs)
-	filter := make([]Codec, 0, len(codecs))
-	for _, c := range s.Codecs {
-		for _, rc := range codecs {
+	filter := codecs[:0] // reuse buffer
+	for _, rc := range codecs {
+		for _, c := range s.Codecs {
 			if c == rc {
 				filter = append(filter, c)
 				break
