@@ -17,6 +17,7 @@ import (
 
 	"github.com/emiago/diago/audio"
 	"github.com/emiago/diago/media"
+	"github.com/emiago/sipgo/sip"
 )
 
 type Bridger interface {
@@ -297,6 +298,8 @@ func NewBridgeMix() *BridgeMix {
 	return &b
 }
 
+// Init initializes bridge struct. Use only if construct bridge with struct
+// or use NewBridgeMix
 func (b *BridgeMix) Init() {
 	b.log = media.DefaultLogger().With("caller", "bridge_mix")
 }
@@ -326,6 +329,10 @@ func (b *BridgeMix) AddDialogSession(d DialogSession) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
+	if state := d.DialogSIP().LoadState(); state != sip.DialogStateConfirmed {
+		return fmt.Errorf("dialog must be answered before adding into bridge")
+	}
+
 	// Stop any current mixing
 	b.log.Debug("Stoping mix", "dialog", d.Id())
 	if err := b.mixStopWait(); err != nil {
@@ -338,9 +345,10 @@ func (b *BridgeMix) AddDialogSession(d DialogSession) error {
 	return nil
 }
 
-func (b *BridgeMix) RemoveDialogSession(dialogID string) error {
+func (b *BridgeMix) RemoveDialogSession(d DialogSession) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
+	dialogID := d.Id()
 
 	var dialog DialogSession
 	for _, d := range b.dialogs {
@@ -462,7 +470,7 @@ func (b *BridgeMix) mixStart() error {
 		defer cancelPoll()
 		defer b.mixWG.Done()
 		defer b.stateWrite(0)
-		b.log.Info("Starting mix loop", "streams.len", len(rwStreams))
+		b.log.Debug("Starting mix loop", "streams.len", len(rwStreams))
 		if err := b.mixLoop(rwStreams, poll); err != nil {
 			b.log.Info("Mix stopped with error", "error", err)
 		}
@@ -474,7 +482,7 @@ func (b *BridgeMix) mixLoop(rwStreams []*bridgePCMStream, poll bool) error {
 	mixBuf := make([]byte, media.RTPBufSize)
 
 	if len(rwStreams) == 1 {
-		b.log.Info("Only single stream in bridge, reading bufffers...")
+		b.log.Debug("Only single stream in bridge, reading bufffers...")
 		// Just keep streaming
 		r := rwStreams[0]
 		if !poll {
