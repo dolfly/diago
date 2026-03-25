@@ -443,7 +443,7 @@ func (s *MediaSession) RemoteSDP(sdpReceived []byte) error {
 	//    different entity.  In that case, the version number in the "o=" line
 	//    of the answer is unrelated to the version number in the o line of the
 	//    offer.
-	amswerer := s.sessionID == 0
+	answerer := s.sessionID == 0
 	if s.sessionID != si.SessionID {
 		s.sessionID = si.SessionID
 		s.sessionVersion = si.SessionVersion + 1
@@ -496,7 +496,7 @@ func (s *MediaSession) RemoteSDP(sdpReceived []byte) error {
 	// 	  no reason to change it, the ordering of codecs in the answer be 8,
 	//    48, and not 48, 8.  This helps assure that the same codec is used in
 	//    both directions.
-	if s.updateRemoteCodecs(codecs[:n], amswerer) == 0 {
+	if s.updateRemoteCodecs(codecs[:n], answerer) == 0 {
 		return fmt.Errorf("no supported codecs found")
 	}
 

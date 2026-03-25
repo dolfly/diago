@@ -125,19 +125,19 @@ func TestMediaSessionUpdateCodec(t *testing.T) {
 	}
 
 	m := newM()
-	m.updateRemoteCodecs([]Codec{CodecAudioAlaw, CodecAudioUlaw})
+	m.updateRemoteCodecs([]Codec{CodecAudioAlaw, CodecAudioUlaw}, false)
 	assert.Equal(t, []Codec{CodecAudioAlaw, CodecAudioUlaw}, m.filterCodecs)
 
 	m = newM()
-	m.updateRemoteCodecs([]Codec{CodecAudioAlaw})
+	m.updateRemoteCodecs([]Codec{CodecAudioAlaw}, false)
 	assert.Equal(t, []Codec{CodecAudioAlaw}, m.filterCodecs)
 
 	m = newM()
-	m.updateRemoteCodecs([]Codec{})
+	m.updateRemoteCodecs([]Codec{}, false)
 	assert.Equal(t, []Codec{}, m.filterCodecs)
 
 	m = newM()
-	m.updateRemoteCodecs([]Codec{{Name: "NonExisting"}})
+	m.updateRemoteCodecs([]Codec{{Name: "NonExisting"}}, false)
 	assert.Equal(t, []Codec{}, m.filterCodecs)
 }
 
