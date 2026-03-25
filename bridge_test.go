@@ -243,7 +243,7 @@ func TestIntegrationBridgingMix(t *testing.T) {
 		}
 		defer func() {
 			t.Log("Removing from bridge", in.ID)
-			bridge.RemoveDialogSession(in.ID)
+			bridge.RemoveDialogSession(in)
 		}()
 
 		<-in.Context().Done()
