@@ -568,7 +568,9 @@ func (d *DialogClientSession) Refer(ctx context.Context, referTo sip.Uri, header
 }
 
 type ReferClientOptions struct {
-	Headers  []sip.Header
+	Headers []sip.Header
+	// OnNotify sends notify status code.
+	// If implemented you need to react on different status code.
 	OnNotify func(statusCode int)
 }
 
