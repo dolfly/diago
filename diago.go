@@ -130,7 +130,7 @@ func WithTransport(t Transport) DiagoOption {
 		t.Transport = strings.TrimSuffix(t.Transport, "6") // udp6, tcp6
 
 		// we want to handle SIP networking better per each transport
-		t.client = dg.createClient(t)
+		t.client = dg.createClient(&t)
 		dg.transports = append(dg.transports, t)
 
 		dg.log.Debug("Loaded transport", "t", t)
@@ -262,7 +262,7 @@ func NewDiago(ua *sipgo.UserAgent, opts ...DiagoOption) *Diago {
 
 		// Proceed as new call
 		dialogUA := sipgo.DialogUA{
-			Client:         dg.getClient(&tran),
+			Client:         dg.getClient(tran),
 			RewriteContact: tran.RewriteContact,
 		}
 		dg.contactHDRFromTransport(tran, &dialogUA.ContactHDR)
@@ -652,7 +652,7 @@ func (dg *Diago) NewDialog(recipient sip.Uri, opts NewDialogOptions) (d *DialogC
 	transport = tran.Transport
 
 	// TODO: remove this alloc of UA each time
-	client := dg.getClient(&tran)
+	client := dg.getClient(tran)
 	dialogUA := sipgo.DialogUA{
 		Client:         client,
 		RewriteContact: tran.RewriteContact,
@@ -708,7 +708,7 @@ func (dg *Diago) NewDialog(recipient sip.Uri, opts NewDialogOptions) (d *DialogC
 	return d, nil
 }
 
-func (dg *Diago) contactHDRFromTransport(tran Transport, contact *sip.ContactHeader) {
+func (dg *Diago) contactHDRFromTransport(tran *Transport, contact *sip.ContactHeader) {
 	// Find contact hdr matching transport
 	scheme := "sip"
 	if tran.TLSConf != nil && !tran.TLSURINoSIPS {
@@ -737,30 +737,30 @@ func (dg *Diago) getClient(tran *Transport) *sipgo.Client {
 	return tran.client
 }
 
-func (dg *Diago) getTransport(transport string) (Transport, bool) {
+func (dg *Diago) getTransport(transport string) (*Transport, bool) {
 	if transport == "" {
-		return dg.transports[0], true
+		return &dg.transports[0], true
 	}
 	for _, t := range dg.transports {
 		if sip.NetworkToLower(transport) == t.Transport {
-			return t, true
+			return &t, true
 		}
 	}
-	return Transport{}, false
+	return nil, false
 }
 
-func (dg *Diago) findTransport(transport string, id string) (Transport, bool) {
-	if transport != "" {
-		return dg.getTransport(transport)
-	}
-
+func (dg *Diago) findTransport(transport string, id string) (*Transport, bool) {
 	if id != "" {
 		for _, t := range dg.transports {
 			if id == t.ID {
-				return t, true
+				return &t, true
 			}
 		}
-		return Transport{}, false
+		return nil, false
+	}
+
+	if transport != "" {
+		return dg.getTransport(transport)
 	}
 
 	return dg.getTransport("udp")
@@ -846,7 +846,7 @@ func (dg *Diago) RegisterTransaction(ctx context.Context, recipient sip.Uri, opt
 	// if err != nil {
 	// 	return nil, err
 	// }
-	client := dg.getClient(&tran)
+	client := dg.getClient(tran)
 	return newRegisterTransaction(client, recipient, contactHDR, dg.log, opts), nil
 }
 
