@@ -50,7 +50,10 @@ func ReadDTMF(inDialog *diago.DialogServerSession) error {
 	}
 	slog.Info("Reading DTMF")
 
-	reader := inDialog.AudioReaderDTMF()
+	reader, err := inDialog.AudioReaderDTMF()
+	if err != nil {
+		return err
+	}
 	return reader.Listen(func(dtmf rune) error {
 		slog.Info("Received DTMF", "dtmf", string(dtmf))
 		return nil
