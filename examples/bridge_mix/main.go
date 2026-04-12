@@ -67,5 +67,5 @@ func BridgeCall(d *diago.Diago, inDialog *diago.DialogServerSession) error {
 	}
 
 	<-inCtx.Done()
-	return bridge.RemoveDialogSession(inDialog.ID)
+	return bridge.RemoveDialogSession(inDialog)
 }
