@@ -130,7 +130,7 @@ func WithTransport(t Transport) DiagoOption {
 		t.Transport = strings.TrimSuffix(t.Transport, "6") // udp6, tcp6
 
 		// we want to handle SIP networking better per each transport
-		t.client = dg.createClient(&t)
+		t.client = dg.createClient(t)
 		dg.transports = append(dg.transports, t)
 
 		dg.log.Debug("Loaded transport", "t", t)
