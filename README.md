@@ -27,6 +27,13 @@ Quick links:
 For WebRTC/Pion migration details and current media API direction, read
 [WEBRTC_PION_CHANGES.md](WEBRTC_PION_CHANGES.md).
 
+The previous combined SIP and media stack is on the `sip-media` branch, based on
+v0.32.2, and may receive patches. To use it in your Go project:
+
+```sh
+go get github.com/emiago/diago@sip-media
+```
+
 **NOTE:** SIP dialog sessions and media stacks are now separated. Use returned
 media objects such as `*DialogMedia` and `*DialogWebrtc` for media operations.
 
